@@ -19,7 +19,7 @@ pipeline {
 
         stage("clonando codigo"){
             steps{
-                git([url: '${env.GIT_REPO}', branch: 'master'])
+                git([url: '${GIT_REPO}', branch: 'master'])
            }
         }
 
