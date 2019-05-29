@@ -1,6 +1,6 @@
 # carpeta target
-.target/*
-.idea/*
+.target/
+.idea/
 
 # Compiled class file
 *.class
