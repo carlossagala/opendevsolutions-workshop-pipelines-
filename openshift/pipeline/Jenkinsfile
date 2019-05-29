@@ -12,14 +12,14 @@ pipeline {
             script{
             def mvnCmd = "mvn clean package -DskipTests"
             def mvnTestCmd = "mvn test"
-            def APP_TEMPLATE = ${OPENSHIFT_DIR}/template.yml
+            def APP_TEMPLATE = "${OPENSHIFT_DIR}/template.yml"
             }
         }
         }
 
         stage("clonando codigo"){
             steps{
-           git([url: '${GIT_REPO}', branch: 'master'])
+                git([url: '${GIT_REPO}', branch: 'master'])
            }
         }
 
