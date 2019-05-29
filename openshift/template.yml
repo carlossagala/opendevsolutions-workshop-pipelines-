@@ -48,6 +48,15 @@ objects:
     name: ${APP_NAME}
     selector:
       deploymentconfig: ${APP_NAME}
+    spec:
+      ports:
+        - name: 8080-tcp
+          port: 8080
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: ${APP_NAME}
+        deploymentconfig: ${APP_NAME}
 - apiVersion: v1
   data:
     application.properties: message=HOLA DESDE EL NAMESPACE ${ENTORNO}
@@ -55,6 +64,7 @@ objects:
   metadata:
     labels:
       app: ${APP_NAME}
+    name: spring-app-config
 - apiVersion: image.openshift.io/v1
   kind: ImageStream
   metadata:
