@@ -1,9 +1,12 @@
 pipeline {
     agent {
-            label maven
+         label maven
     }
+        options {
+            skipDefaultCheckout()
+            disableConcurrentBuilds()
+        }
     stages {
-
         stage ("preparacion previa de desarrollo"){
             steps{
             script{
