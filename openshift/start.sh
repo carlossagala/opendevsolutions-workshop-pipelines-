@@ -23,4 +23,4 @@ oc new-app jenkins-persistent -n jenkins
 oc adm policy add-role-to-user edit system:serviceaccount:jenkins:jenkins -n spring-dev
 oc adm policy add-role-to-user edit system:serviceaccount:jenkins:jenkins -n spring-prod
 
-oc new-app pipeline-template
+oc new-app pipeline-template -p APP_NAME=spring -p GIT_REPO=https://github.com/carlossagala/opendevsolutions-workshop-pipelines-.git -p GIT_BRANCH=master
