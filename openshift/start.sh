@@ -1,7 +1,4 @@
-minishift start
-
 oc login -u admin -p redhat
-
 oc new-project spring-dev
 oc new-project spring-prod
 oc new-project jenkins
