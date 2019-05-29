@@ -10,30 +10,30 @@ pipeline {
         stage ("preparacion previa de desarrollo"){
             steps{
             script{
-            def mvnCmd = "mvn clean package -DskipTests"
-            def mvnTestCmd = "mvn test"
-            def APP_TEMPLATE = "${OPENSHIFT_DIR}/template.yml"
+            env.COMPILE_COMMAND = "mvn clean package -DskipTests"
+            env.TEST_COMMAND = "mvn test"
+            env.APP_TEMPLATE = "${env.OPENSHIFT_DIR}/template.yml"
             }
         }
         }
 
         stage("clonando codigo"){
             steps{
-                git([url: '${GIT_REPO}', branch: 'master'])
+                git([url: '${env.GIT_REPO}', branch: 'master'])
            }
         }
 
         stage("compilando codigo") {
         steps{
             script{
-               sh "${mvnCmd}"
+               sh env.COMPILE_COMMAND
             }
         }
 }
         stage("Test unitarios"){
         steps{
             script{
-                sh "${mvnTestCmd}"
+                sh env.TEST_COMMAND
             }
         }
 }
@@ -41,8 +41,8 @@ pipeline {
         steps{
             script{
               openshift.withCluster(){
-                 openshift.withProject(${APP_NAME}-dev){
-                    def objects = openshift.process( "-f",  "APP_TEMPLATE", "-p", "APP_NAME=${APP_NAME}", "-p", "ENTORNO=${APP_NAME}-dev")
+                 openshift.withProject("${env.APP_NAME}-dev"){
+                    def objects = openshift.process(readFile(file: env.APP_TEMPLATE), "-p", "APP_NAME=${env.APP_NAME}", "-p", "ENTORNO=${env.APP_NAME}-dev")
                     openshift.apply(objects);
                  }
                 }
@@ -54,8 +54,8 @@ pipeline {
         steps{
            script{
                openshift.withCluster(){
-                   openshift.withProject(${APP_NAME}-dev){
-                        openshift.selector("bc", "${APP_NAME}").startBuild("--from-dir=./target", "--wait=true")
+                   openshift.withProject("${env.APP_NAME}-dev"){
+                        openshift.selector("bc", "${env.APP_NAME}").startBuild("--from-dir=./target", "--wait=true")
                    }
                }
             }
@@ -65,9 +65,9 @@ pipeline {
         steps{
            script{
                openshift.withCluster(){
-                   openshift.withProject(${APP_NAME}-dev){
-                        def TAG_IMAGE = readMavenPom().getVersion()
-                        openshift.tag("${APP_NAME}:latest", "${APP_NAME}:${TAG_IMAGE}");
+                   openshift.withProject("${APP_NAME}-dev"){
+                        env.TAG_IMAGE = readMavenPom().getVersion()
+                        openshift.tag("${env.APP_NAME}:latest", "${env.APP_NAME}:${env.TAG_IMAGE}");
                    }
                }
             }
@@ -77,17 +77,17 @@ pipeline {
         steps{
            script{
                openshift.withCluster(){
-                   openshift.withProject(${APP_NAME}-dev){
-                        def dc = openshift.selector("dc/${APP_NAME}").object()
-                        openshift.set("image", "dc/${APP_NAME}", "${APP_NAME}=docker-registry.default.svc:5000/${APP_NAME}-dev/${APP_NAME}:${TAG_IMAGE}")
+                   openshift.withProject("${env.APP_NAME}-dev"){
+                        def dc = openshift.selector("dc/${env.APP_NAME}").object()
+                        openshift.set("image", "dc/${env.APP_NAME}", "${env.APP_NAME}=docker-registry.default.svc:5000/${env.APP_NAME}-dev/${env.APP_NAME}:${env.TAG_IMAGE}")
                         openshift.apply(dc)
-                        openshift.selector("dc", "tasks").rollout().latest();
-                        def dc_version = openshift.selector("dc", "${APP_NAME}").object().status.latestVersion
-                        def rc = openshift.selector("rc", "${APP_NAME}-${dc_version}").object()
-                        echo "Waiting for ReplicationController ${APP_NAME}-${dc_version} to be ready"
+                        openshift.selector("dc", "${env.APP_NAME}").rollout().latest();
+                        def dc_version = openshift.selector("dc", "${envAPP_NAME}").object().status.latestVersion
+                        def rc = openshift.selector("rc", "${env.APP_NAME}-${dc_version}").object()
+                        echo "Waiting for ReplicationController ${env.APP_NAME}-${dc_version} to be ready"
                         while (rc.spec.replicas != rc.status.readyReplicas) {
                               sleep 5
-                              rc = openshift.selector("rc", "${APP_NAME}-${dc_version}").object()
+                              rc = openshift.selector("rc", "${env.APP_NAME}-${dc_version}").object()
                         }
                }
             }
@@ -99,8 +99,8 @@ pipeline {
         steps{
             script{
               openshift.withCluster(){
-                 openshift.withProject(${APP_NAME}-prod){
-                    def objects = openshift.process( "-f",  "APP_TEMPLATE", "-p", "APP_NAME=${APP_NAME}", "-p", "ENTORNO=${APP_NAME}-prod" )
+                 openshift.withProject("${env.APP_NAME}-prod"){
+                    def objects = openshift.process(readFile(file: env.APP_TEMPLATE_FILE), "-p", "APP_NAME=${env.APP_NAME}", "-p", "ENTORNO=${env.APP_NAME}-prod" )
                     def objetosProductivos = []
 
                             for (o in objects) {
@@ -118,8 +118,8 @@ pipeline {
         steps{
                    script{
                        openshift.withCluster(){
-                           openshift.withProject(${APP_NAME}-prod){
-                                openshift.tag("${APP_NAME}-dev/${APP_NAME}:${TAG_IMAGE}", "${APP_NAME}:${TAG_IMAGE}");
+                           openshift.withProject("${env.APP_NAME}-prod"){
+                                openshift.tag("${env.APP_NAME}-dev/${env.APP_NAME}:${env.TAG_IMAGE}", "${env.APP_NAME}:${env.TAG_IMAGE}");
                            }
                        }
                     }
@@ -130,17 +130,17 @@ pipeline {
         steps{
            script{
                openshift.withCluster(){
-                   openshift.withProject(${APP_NAME}-prod){
-                        def dc = openshift.selector("dc/${APP_NAME}").object()
-                        openshift.set("image", "dc/${APP_NAME}", "${APP_NAME}=docker-registry.default.svc:5000/${APP_NAME}-dev/${APP_NAME}:${TAG_IMAGE}")
+                   openshift.withProject("${env.APP_NAME}-prod"){
+                        def dc = openshift.selector("dc/${env.APP_NAME}").object()
+                        openshift.set("image", "dc/${env.APP_NAME}", "${env.APP_NAME}=docker-registry.default.svc:5000/${env.APP_NAME}-dev/${env.APP_NAME}:${env.TAG_IMAGE}")
                         openshift.apply(dc)
-                        openshift.selector("dc", "tasks").rollout().latest();
-                        def dc_version = openshift.selector("dc", "${APP_NAME}").object().status.latestVersion
-                        def rc = openshift.selector("rc", "${APP_NAME}-${dc_version}").object()
+                        openshift.selector("dc", "${env.APP_NAME}").rollout().latest();
+                        def dc_version = openshift.selector("dc", "${env.APP_NAME}").object().status.latestVersion
+                        def rc = openshift.selector("rc", "${env.APP_NAME}-${dc_version}").object()
                         echo "Waiting for ReplicationController ${APP_NAME}-${dc_version} to be ready"
                         while (rc.spec.replicas != rc.status.readyReplicas) {
                               sleep 5
-                              rc = openshift.selector("rc", "${APP_NAME}-${dc_version}").object()
+                              rc = openshift.selector("rc", "${env.APP_NAME}-${dc_version}").object()
                         }
                }
             }
