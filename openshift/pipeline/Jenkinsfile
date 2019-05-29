@@ -26,14 +26,14 @@ pipeline {
         stage("compilando codigo") {
         steps{
             script{
-               sh ${mvnCmd}
+               sh "${mvnCmd}"
             }
         }
 }
         stage("Test unitarios"){
         steps{
             script{
-                sh ${mvnTestCmd}
+                sh "${mvnTestCmd}"
             }
         }
 }
