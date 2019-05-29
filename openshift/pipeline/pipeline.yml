@@ -40,6 +40,7 @@ parameters:
     displayName: Application Name
     name: APP_NAME
     required: true
+    value: spring
   - description: Git Repository
     displayName: Git Repository
     name: GIT_REPO
@@ -48,6 +49,7 @@ parameters:
     displayName: Git Branch
     name: GIT_BRANCH
     required: true
+    value: master
   - description: OpenShift Directory
     displayName: OpenShift Directory
     name: OPENSHIFT_DIR
