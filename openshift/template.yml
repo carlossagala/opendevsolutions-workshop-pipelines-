@@ -1,8 +1,11 @@
 apiVersion: v1
 kind: Template
 metadata:
-  resourceVersion: ""
-  selfLink: ""
+  name: pipeline-template
+  annotations:
+    openshift.io/display-name: Spring Pipeline
+    iconClass: fa fa-code
+    description: Templates to generate the pipeline for an application.
 objects:
 - apiVersion: build.openshift.io/v1
   kind: BuildConfig
@@ -47,7 +50,7 @@ objects:
       deploymentconfig: ${APP_NAME}
 - apiVersion: v1
   data:
-    application.properties: message=HOLA DESDE OPENSHIFT
+    application.properties: message=HOLA DESDE EL NAMESPACE ${ENTORNO}
   kind: ConfigMap
   metadata:
     labels:
@@ -114,7 +117,11 @@ objects:
     - type: ConfigChange
 parameters:
 - name: APP_NAME
-  displayName: Application Name
-  description: Application Name
+  displayName: Nombre de la aplicacion
+  description: Nombre de la aplicacion
   required: true
   value: hello-openshift
+- name: ENTORNO
+  displayName: variable de la aplicacion
+  description: variable de la aplicacion
+  value: ""
