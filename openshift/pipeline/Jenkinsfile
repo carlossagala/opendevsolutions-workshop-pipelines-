@@ -83,12 +83,13 @@ pipeline {
 
                         openshift.set("image", "dc/${env.APP_NAME}", "${env.APP_NAME}=172.30.1.1:5000/${env.APP_NAME}-dev/${env.APP_NAME}:${env.TAG_IMAGE}")
                         openshift.selector("dc", "${env.APP_NAME}").rollout().latest();
-                        def dc_version = openshift.selector("dc", "${env.APP_NAME}").object().status.latestVersion
-                        def rc = openshift.selector("rc", "${env.APP_NAME}-${dc_version}").object()
-                        echo "Waiting for ReplicationController ${env.APP_NAME}-${dc_version} to be ready"
-                        while (rc.spec.replicas != rc.status.readyReplicas) {
+                        def dc = openshift.selector("dc", "${env.APP_NAME}").object()
+
+
+                        echo "Esperando a que las replicas de ${env.APP_NAME}-dev esten listas"
+                        while (dc.spec.replicas != dc.status.availableReplicas) {
                               sleep 5
-                              rc = openshift.selector("rc", "${env.APP_NAME}-${dc_version}").object()
+                              dc = openshift.selector("dc", "${env.APP_NAME}").object()
                         }
                }
             }
@@ -134,13 +135,14 @@ pipeline {
                    openshift.withProject("${env.APP_NAME}-prod"){
                         openshift.set("image", "dc/${env.APP_NAME}", "${env.APP_NAME}=172.30.1.1:5000/${env.APP_NAME}-prod/${env.APP_NAME}:${env.TAG_IMAGE}")
                         openshift.selector("dc", "${env.APP_NAME}").rollout().latest();
-                        def dc_version = openshift.selector("dc", "${env.APP_NAME}").object().status.latestVersion
-                        def rc = openshift.selector("rc", "${env.APP_NAME}-${dc_version}").object()
-                        echo "Waiting for ReplicationController ${env.APP_NAME}-${dc_version} to be ready"
-                        while (rc.spec.replicas != rc.status.readyReplicas) {
-                              sleep 5
-                              rc = openshift.selector("rc", "${env.APP_NAME}-${dc_version}").object()
-                        }
+                        def dc = openshift.selector("dc", "${env.APP_NAME}").object()
+
+
+                                                echo "Esperando a que las replicas de ${env.APP_NAME}-prod esten listas"
+                                                while (dc.spec.replicas != dc.status.availableReplicas) {
+                                                      sleep 5
+                                                      dc = openshift.selector("dc", "${env.APP_NAME}").object()
+                                                }
                }
             }
           }
