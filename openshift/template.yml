@@ -114,8 +114,6 @@ objects:
               path: application.properties
             name: spring-app-config
           name: volume-t4era
-    triggers:
-    - type: ConfigChange
 parameters:
 - name: APP_NAME
   displayName: Nombre de la aplicacion
