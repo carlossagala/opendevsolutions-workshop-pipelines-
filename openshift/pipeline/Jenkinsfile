@@ -46,8 +46,8 @@ pipeline {
             script{
               echo "-------------------------configurado entorno de desarrollo--------------------------"
             }
+          }
         }
-
         stage("compilando imagen "){
         steps{
            script{
