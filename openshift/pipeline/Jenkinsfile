@@ -101,7 +101,7 @@ pipeline {
             script{
               openshift.withCluster(){
                  openshift.withProject("${env.APP_NAME}-prod"){
-                    def objects = openshift.process(readFile(file: env.APP_TEMPLATE_FILE), "-p", "APP_NAME=${env.APP_NAME}", "-p", "ENTORNO=${env.APP_NAME}-prod" )
+                    def objects = openshift.process(readFile(file: env.APP_TEMPLATE), "-p", "APP_NAME=${env.APP_NAME}", "-p", "ENTORNO=${env.APP_NAME}-prod" )
                     def objetosProductivos = []
 
                             for (o in objects) {
