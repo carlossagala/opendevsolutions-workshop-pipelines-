@@ -80,9 +80,8 @@ pipeline {
                openshift.withCluster(){
                    openshift.withProject("${env.APP_NAME}-dev"){
                         echo "comenzando despliegue en desarrollo"
-                        def dc = openshift.selector("dc/${env.APP_NAME}").object()
+
                         openshift.set("image", "dc/${env.APP_NAME}", "${env.APP_NAME}=docker-registry.default.svc:5000/${env.APP_NAME}-dev/${env.APP_NAME}:${env.TAG_IMAGE}")
-                        openshift.apply(dc)
                         openshift.selector("dc", "${env.APP_NAME}").rollout().latest();
                         def dc_version = openshift.selector("dc", "${env.APP_NAME}").object().status.latestVersion
                         def rc = openshift.selector("rc", "${env.APP_NAME}-${dc_version}").object()
@@ -134,9 +133,7 @@ pipeline {
            script{
                openshift.withCluster(){
                    openshift.withProject("${env.APP_NAME}-prod"){
-                        def dc = openshift.selector("dc/${env.APP_NAME}").object()
                         openshift.set("image", "dc/${env.APP_NAME}", "${env.APP_NAME}=docker-registry.default.svc:5000/${env.APP_NAME}-dev/${env.APP_NAME}:${env.TAG_IMAGE}")
-                        openshift.apply(dc)
                         openshift.selector("dc", "${env.APP_NAME}").rollout().latest();
                         def dc_version = openshift.selector("dc", "${env.APP_NAME}").object().status.latestVersion
                         def rc = openshift.selector("rc", "${env.APP_NAME}-${dc_version}").object()
