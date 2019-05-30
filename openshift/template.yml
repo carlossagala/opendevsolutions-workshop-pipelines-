@@ -28,7 +28,8 @@ objects:
       sourceStrategy:
         from:
           kind: ImageStreamTag
-          name: openshift/java:8
+          name: java:8
+          namespace: openshift
       type: Source
 - apiVersion: route.openshift.io/v1
   kind: Route
