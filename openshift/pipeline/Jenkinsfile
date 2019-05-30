@@ -9,74 +9,81 @@ pipeline {
     stages {
         stage ("preparacion previa de desarrollo"){
             steps{
-            script{
-            env.COMPILE_COMMAND = "mvn clean package -DskipTests"
-            env.TEST_COMMAND = "mvn test"
-            env.APP_TEMPLATE = "${env.OPENSHIFT_DIR}/template.yml"
-            }
-        }
+             script{
+                 echo "----------preparacion previa de desarrollo-----------"
+                 env.COMPILE_COMMAND = "mvn clean package -DskipTests"
+                 env.TEST_COMMAND = "mvn test"
+                 env.APP_TEMPLATE = "${env.OPENSHIFT_DIR}/template.yml"
+              }
+             }
         }
 
         stage("clonando codigo"){
             steps{
-                git([url: '${GIT_REPO}', branch: 'master'])
+                echo "-------------clonando codigo----------------"
+                git([url: "${env.GIT_REPO}", branch: 'master'])
            }
         }
 
         stage("compilando codigo") {
         steps{
             script{
-               echo "compilando codigo"
+               echo "----------compilando codigo-----------"
                sh env.COMPILE_COMMAND
+                }
             }
         }
-}
         stage("Test unitarios"){
         steps{
             script{
+                echo "-----------------Test unitarios--------------------"
                 sh env.TEST_COMMAND
+                }
             }
         }
-}
         stage("configurado entorno de desarrollo"){
         steps{
             script{
+              echo "-------------------------configurado entorno de desarrollo--------------------------"
               openshift.withCluster(){
                  openshift.withProject("${env.APP_NAME}-dev"){
                     def objects = openshift.process(readFile(file: env.APP_TEMPLATE), "-p", "APP_NAME=${env.APP_NAME}", "-p", "ENTORNO=${env.APP_NAME}-dev")
                     openshift.apply(objects);
-                 }
+                        }
+                    }
                 }
-             }
+            }
         }
-}
 
         stage("compilando imagen "){
         steps{
            script{
+           echo "----------------compilando imagen-----------------------"
                openshift.withCluster(){
                    openshift.withProject("${env.APP_NAME}-dev"){
                         openshift.selector("bc", "${env.APP_NAME}").startBuild("--from-dir=./target", "--wait=true")
-                   }
-               }
-            }
-          }
-}
+                      }
+                 }
+                }
+             }
+        }
         stage("tag imagen"){
         steps{
            script{
+           echo "---------------------tag imagen---------------------------"
                openshift.withCluster(){
                    openshift.withProject("${APP_NAME}-dev"){
                         env.TAG_IMAGE = readMavenPom().getVersion()
                         openshift.tag("${env.APP_NAME}:latest", "${env.APP_NAME}:${env.TAG_IMAGE}");
                    }
-               }
+                  }
+                }
             }
-          }
-}
-        stage("deploy image"){
+        }
+        stage("despliegue en desarrollo"){
         steps{
            script{
+               echo "---------------------------despliegue en desarrollo-----------------------"
                openshift.withCluster(){
                    openshift.withProject("${env.APP_NAME}-dev"){
                         echo "comenzando despliegue en desarrollo"
@@ -91,15 +98,16 @@ pipeline {
                               sleep 5
                               dc = openshift.selector("dc", "${env.APP_NAME}").object()
                         }
-               }
-            }
-          }
+                     }
+                  }
+                }
+              }
         }
-}
 
         stage("aplicando configuracion en prod"){
         steps{
             script{
+            echo "---------------aplicando configuracion en prod----------------------"
               openshift.withCluster(){
                  openshift.withProject("${env.APP_NAME}-prod"){
                     def objects = openshift.process(readFile(file: env.APP_TEMPLATE), "-p", "APP_NAME=${env.APP_NAME}", "-p", "ENTORNO=${env.APP_NAME}-prod" )
@@ -111,42 +119,42 @@ pipeline {
                                 }
                             }
                     openshift.apply(objetosProductivos);
-                 }
-                }
-             }
+                     }
+                  }
+              }
+           }
         }
-}
         stage("Copiando imagen del entorno de desarrollo a produccion"){
         steps{
                    script{
+                        echo "------------------Copiando imagen del entorno de desarrollo a produccion-----------------------"
                        openshift.withCluster(){
                            openshift.withProject("${env.APP_NAME}-prod"){
                                 openshift.tag("${env.APP_NAME}-dev/${env.APP_NAME}:${env.TAG_IMAGE}", "${env.APP_NAME}:${env.TAG_IMAGE}");
                            }
                        }
                     }
-         }
+                 }
 
-}
+        }
         stage("deploy image in prod"){
         steps{
            script{
+               echo "--------------------------deploy image in prod-----------------------------"
                openshift.withCluster(){
                    openshift.withProject("${env.APP_NAME}-prod"){
                         openshift.set("image", "dc/${env.APP_NAME}", "${env.APP_NAME}=172.30.1.1:5000/${env.APP_NAME}-prod/${env.APP_NAME}:${env.TAG_IMAGE}")
                         openshift.selector("dc", "${env.APP_NAME}").rollout().latest();
                         def dc = openshift.selector("dc", "${env.APP_NAME}").object()
-
-
-                                                echo "Esperando a que las replicas de ${env.APP_NAME}-prod esten listas"
-                                                while (dc.spec.replicas != dc.status.availableReplicas) {
-                                                      sleep 5
-                                                      dc = openshift.selector("dc", "${env.APP_NAME}").object()
-                                                }
-               }
+                             echo "Esperando a que las replicas de ${env.APP_NAME}-prod esten listas"
+                             while (dc.spec.replicas != dc.status.availableReplicas) {
+                             sleep 5
+                             dc = openshift.selector("dc", "${env.APP_NAME}").object()
+                            }
+                        }
+                    }
+                }
             }
-          }
         }
-        }
- }
+     }
 }
