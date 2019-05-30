@@ -115,14 +115,6 @@ objects:
             name: spring-app-config
           name: volume-t4era
     triggers:
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - ${APP_NAME}
-        from:
-          kind: ImageStreamTag
-          name: ${APP_NAME}:latest
-      type: ImageChange
     - type: ConfigChange
 parameters:
 - name: APP_NAME
