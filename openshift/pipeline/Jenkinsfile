@@ -26,6 +26,7 @@ pipeline {
         stage("compilando codigo") {
         steps{
             script{
+               echo "compilando codigo"
                sh env.COMPILE_COMMAND
             }
         }
@@ -86,6 +87,7 @@ pipeline {
                         def rc = openshift.selector("rc", "${env.APP_NAME}-${dc_version}").object()
                         echo "Waiting for ReplicationController ${env.APP_NAME}-${dc_version} to be ready"
                         while (rc.spec.replicas != rc.status.readyReplicas) {
+                              echo "esperando 5 segundos"
                               sleep 5
                               rc = openshift.selector("rc", "${env.APP_NAME}-${dc_version}").object()
                         }
